@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+
+begin 
+  require 'drymon'
+rescue
+  require 'rubygems'
+  rrequire 'drymon'
+end
+
+id = Drymon::Openpne::Id.new()
+id.file
+id.output

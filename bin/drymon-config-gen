@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+
+begin 
+  require 'drymon'
+rescue
+  require 'rubygems'
+  require 'drymon'
+end
+
+Drymon::Config.copy
+
