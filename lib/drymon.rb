@@ -7,7 +7,7 @@ require 'drymon/openpne/id'
 
 
 module Drymon
-  VERSION = '0.0.2'
+  VERSION = '0.0.3'
   def output_filename(url)
 
     basedir = "yml/"+URI.parse(url).host
