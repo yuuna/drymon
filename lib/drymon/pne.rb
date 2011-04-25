@@ -37,10 +37,10 @@ module Drymon
         
 
         action = {"path" => form.action,"method" => form.method,
-          "authMailAddress[mail_address]" => @openpne['username'],
-          "authMailAddress[password]" => @openpne['password'],
-          "authMailAddress[next_uri]" => "member/login"}
-
+          "post_params" => {"authMailAddress[mail_address]" => @openpne['username'],
+            "authMailAddress[password]" => @openpne['password'],
+            "authMailAddress[next_uri]" => "member/login"}}
+        
         @forms["actions"] << action
 
 
@@ -64,6 +64,8 @@ module Drymon
         
         output_flag = false
         agent.get(@openpne["path"]+path).forms.each do |form|
+          forms = @forms.clone
+
           unless form.action =~ /language/           
             action=Hash.new
             action["path"] = form.action
@@ -71,12 +73,24 @@ module Drymon
             action["module"] = @module ||nil 
             action["action"] = @action ||nil
             action["post_params"] = Hash[*form.build_query.flatten]
+            action["post_params"].each { |key,value|
+              if key =~ /_csrf_token/
+                action["post_params"][key] = "%(_csrf_token)%"
+                curpage = forms["actions"].pop
+                curpage["class"] = "RegexpSetVarAction"
+                curpage["expr"] = "name=\"#{key.gsub("[","\\[").gsub("]","\\]")}\" value=\"(\\w+)\""
+                curpage["key"] =  "_csrf_token"
+                forms["actions"] << curpage
+              else
+                print value
+                action["post_params"][key] = value.to_s
+              end
+
+            }
             if action["path"] != "" || action["path"] != nil
-              @forms["actions"] << action
-              @forms["response"] = {"tag" => "value"}
-              Drymon::save_yaml(Drymon::output_filename(@openpne["domain"]+ @openpne['path']+path),@forms)
-              @forms["actions"].pop
-              @forms["response"] = {}
+              forms["actions"] << action
+              forms["response"] = {"tag" => "value"}
+              Drymon::save_yaml(Drymon::output_filename(@openpne["domain"]+ @openpne['path']+path),forms)
               output_flag = true
             end
           end

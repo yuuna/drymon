@@ -27,7 +27,7 @@ module Drymon
 
     def save_yaml(file, hash)
       require 'syck/encoding'
-      hakaiheader = {"loop" => 10,"max_request" =>  5,"max_scenario" => 5,"log_level" =>  2, "ranking" => 20,"timeout"=> 5,"show_report" =>  true,"save_report" =>  false}
+      hakaiheader = {"loop" => 10,"max_request" =>  5,"max_scenario" => 5,"log_level" =>  2, "ranking" => 20,"timeout"=> 5,"show_report" =>  true,"save_report" =>  false,"encoding" => "UTF-8"}
 
       open(file, "w") do |f|
         f.write(Syck::unescape(YAML::dump(hakaiheader)).gsub("---",""))
