@@ -14,23 +14,24 @@ module Drymon
       unless File.exists?(basedir)
         Dir::mkdir(basedir)
       end
+    p url
     filename = URI.parse(url).path.gsub(/\//,"_")
       if filename == "_" || filename == nil
         filename = "index"
       end
-    output = sprintf("%s/%s.yml",basedir,filename)
-    if File.exists?(output)
-      output = sprintf("%s/%s-%s.yml",basedir,Time.now.strftime("%Y%m%d-%H%M%S"),filename)
-      sleep 1
-    end
+    output = sprintf("%s/%s-%s.yml",basedir,Time.now.strftime("%Y%m%d-%H%M%S"),filename)
+    sleep 1
     return output
 
   end
 
     def save_yaml(file, hash)
       require 'syck/encoding'
+      hakaiheader = {"loop" => 10,"max_request" =>  5,"max_scenario" => 5,"log_level" =>  2, "ranking" => 20,"timeout"=> 5,"show_report" =>  true,"save_report" =>  false}
+
       open(file, "w") do |f|
-        f.write(Syck::unescape(YAML::dump(hash)))
+        f.write(Syck::unescape(YAML::dump(hakaiheader)).gsub("---",""))
+        f.write(Syck::unescape(YAML::dump(hash)).gsub("---",""))
         f.flush
       end
       puts 'output file: '+file

@@ -17,8 +17,8 @@ module Drymon
       @config = Drymon::load_config
       @openpne =Drymon::load_config("openpne.yml")
       @forms = Hash.new
-      @forms["domain"] = @openpne['url']      
-      @forms["actions"] = Array.new()
+      @forms["domain"] = @openpne['domain']      
+      @forms["actions"] = Array.new
       if File.exist? "config/openpne_id.yml"
         @id = Drymon::load_config("openpne_id.yml")
       else
@@ -29,18 +29,40 @@ module Drymon
       begin
         agent = Mechanize.new
         agent.user_agent = @config['user_agent']
-        page = agent.get(@openpne['url'])
+        page = agent.get(@openpne['domain']+@openpne['path'])
         form = page.forms.first
         form.field_with(:name => 'authMailAddress[mail_address]').value = @openpne['username']
         form.field_with(:name => 'authMailAddress[password]').value = @openpne['password']
         result = agent.submit(form)
+
+        
+        action = {"path" => form.action,"method" => form.method,
+          "authMailAddress[mail_address]" => @openpne['username'],
+          "authMailAddress[password]" => @openpne['password'],
+          "authMailAddress[next_uri]" => "member/login"}
+
+        @forms["actions"] << action
+
+
         if path =~ /^\//
           path = path.slice(1,path.length-1)
         end
         if path =~ /:id/  && @id.has_key?(@module)
-          path.sub!(/:id/,@id[@module].to_s)
+          if @id[@module].class == "String"
+            path.sub!(/:id/,@id[@module].to_s)
+          else @id[@module].class == "Hash"
+            if @id[@module].has_key?(path)
+              path.sub!(/:id/,@id[@module][path].to_s)
+            else
+              path.sub!(/:id/,@id[@module]["id"].to_s)
+            end
+          end
         end
 
+
+
+        action = {"path" => @openpne["path"]+path}
+        @forms["actions"] << action
       
         agent.get(path).forms.each do |form|
           unless form.action =~ /language/           
@@ -51,19 +73,21 @@ module Drymon
             action["module"] = @module ||nil 
             action["action"] = @action ||nil
             action["post_params"] = Hash[*form.build_query.flatten]
-            @forms["actions"] << action
+            if action["path"] != "" || action["path"] != nil
+              @forms["actions"] << action
+            end
           end
           
           @forms["response"] = {"tag" => "value"}
           #この後ファイルに書き出して終わり
-          Drymon::save_yaml(Drymon::output_filename(@openpne['url']+path),@forms)
+          Drymon::save_yaml(Drymon::output_filename(@openpne["domain"]+ @openpne['path']+path),@forms)
 
-          @forms["actions"] = Array.new()
+          @forms["actions"] = []
           @forms["response"] = {}
         end
-      rescue
-      p "error is occurred: "+path
-    end
+      rescue 
+        p "error is occurred: "+path
+#    end
 
      end
 

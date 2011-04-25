@@ -1,3 +1,4 @@
-url: http://localhost/openpne
+domain: http://127.0.0.1
+path: /openpne/
 username: sns@example.com
 password: password

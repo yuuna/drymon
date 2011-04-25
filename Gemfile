@@ -12,6 +12,7 @@ group :development do
   gem "rcov", ">= 0"
 end
 
+gem "i18n"
 gem "hpricot"
 gem "mechanize"
 gem "activesupport"
