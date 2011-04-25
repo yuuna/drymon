@@ -87,7 +87,7 @@ module Drymon
         end
       rescue 
         p "error is occurred: "+path
-#    end
+      end
 
      end
 
