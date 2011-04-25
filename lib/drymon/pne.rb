@@ -82,7 +82,6 @@ module Drymon
                 curpage["key"] =  "_csrf_token"
                 forms["actions"] << curpage
               else
-                print value
                 action["post_params"][key] = value.to_s
               end
 
