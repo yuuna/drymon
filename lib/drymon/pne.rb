@@ -34,17 +34,23 @@ module Drymon
         form.field_with(:name => 'authMailAddress[mail_address]').value = @openpne['username']
         form.field_with(:name => 'authMailAddress[password]').value = @openpne['password']
         result = agent.submit(form)
-
         
+
+        action = {"path" => form.action,"method" => form.method,
+          "authMailAddress[mail_address]" => @openpne['username'],
+          "authMailAddress[password]" => @openpne['password'],
+          "authMailAddress[next_uri]" => "member/login"}
+
+        @forms["actions"] << action
 
 
         if path =~ /^\//
           path = path.slice(1,path.length-1)
         end
         if path =~ /:id/  && @id.has_key?(@module)
-          if @id[@module].class.to_s == "String" || @id[@module].class.to_s == "Fixnum"
+          if @id[@module].instance_of?(String) || @id[@module].instance_of?(Fixnum)
             path.sub!(/:id/,@id[@module].to_s)
-          else @id[@module].class.to_s == "Hash"
+          else @id[@module].instance_of?(Hash)
             if @id[@module].has_key?(path)
               path.sub!(/:id/,@id[@module][path].to_s)
             else
@@ -53,12 +59,11 @@ module Drymon
           end
         end
 
-
-
         action = {"path" => @openpne["path"]+path}
         @forms["actions"] << action
-      
-        agent.get(path).forms.each do |form|
+        
+        output_flag = false
+        agent.get(@openpne["path"]+path).forms.each do |form|
           unless form.action =~ /language/           
             action=Hash.new
             action["path"] = form.action
@@ -70,23 +75,25 @@ module Drymon
               @forms["actions"] << action
               @forms["response"] = {"tag" => "value"}
               Drymon::save_yaml(Drymon::output_filename(@openpne["domain"]+ @openpne['path']+path),@forms)
-
               @forms["actions"].pop
               @forms["response"] = {}
+              output_flag = true
             end
           end
-
-          @forms["actions"] =Array.new
-          @forms["response"] = {}
         end
+        if output_flag == false
+          Drymon::save_yaml(Drymon::output_filename(@openpne["domain"]+ @openpne['path']+path),@forms)
+        end
+        @forms["actions"] =Array.new
+        @forms["response"] = {}
       rescue 
         @forms["actions"] =Array.new
         @forms["response"] = {}
         p "error is occurred: "+path
       end
-
-     end
-
+      
+    end
+      
     def load filename=nil
       
       opts = OptionParser.new("Usage: #{File::basename($0)} URI")
