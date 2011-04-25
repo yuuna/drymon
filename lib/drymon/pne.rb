@@ -36,21 +36,15 @@ module Drymon
         result = agent.submit(form)
 
         
-        action = {"path" => form.action,"method" => form.method,
-          "authMailAddress[mail_address]" => @openpne['username'],
-          "authMailAddress[password]" => @openpne['password'],
-          "authMailAddress[next_uri]" => "member/login"}
-
-        @forms["actions"] << action
 
 
         if path =~ /^\//
           path = path.slice(1,path.length-1)
         end
         if path =~ /:id/  && @id.has_key?(@module)
-          if @id[@module].class == "String"
+          if @id[@module].class.to_s == "String" || @id[@module].class.to_s == "Fixnum"
             path.sub!(/:id/,@id[@module].to_s)
-          else @id[@module].class == "Hash"
+          else @id[@module].class.to_s == "Hash"
             if @id[@module].has_key?(path)
               path.sub!(/:id/,@id[@module][path].to_s)
             else
@@ -66,7 +60,6 @@ module Drymon
       
         agent.get(path).forms.each do |form|
           unless form.action =~ /language/           
-
             action=Hash.new
             action["path"] = form.action
             action["method"] = form.method
@@ -75,17 +68,20 @@ module Drymon
             action["post_params"] = Hash[*form.build_query.flatten]
             if action["path"] != "" || action["path"] != nil
               @forms["actions"] << action
+              @forms["response"] = {"tag" => "value"}
+              Drymon::save_yaml(Drymon::output_filename(@openpne["domain"]+ @openpne['path']+path),@forms)
+
+              @forms["actions"].pop
+              @forms["response"] = {}
             end
           end
-          
-          @forms["response"] = {"tag" => "value"}
-          #この後ファイルに書き出して終わり
-          Drymon::save_yaml(Drymon::output_filename(@openpne["domain"]+ @openpne['path']+path),@forms)
 
-          @forms["actions"] = []
+          @forms["actions"] =Array.new
           @forms["response"] = {}
         end
       rescue 
+        @forms["actions"] =Array.new
+        @forms["response"] = {}
         p "error is occurred: "+path
       end
 
@@ -117,7 +113,6 @@ module Drymon
           if (row.length == 2 || row.length == 5 )
             @module = row[1]
             @action = row[0]
-            
             if row.length == 2
               get(row[0])
             elsif row.length == 5
