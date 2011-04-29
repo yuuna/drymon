@@ -14,7 +14,6 @@ module Drymon
       unless File.exists?(basedir)
         Dir::mkdir(basedir)
       end
-    p url
     filename = URI.parse(url).path.gsub(/\//,"_")
       if filename == "_" || filename == nil
         filename = "index"
@@ -34,7 +33,7 @@ module Drymon
         f.write(Syck::unescape(YAML::dump(hash)).gsub("---",""))
         f.flush
       end
-      puts 'output file: '+file
+#      puts 'output file: '+file
     end
 
     def load_config(config = 'drymon.yml')
